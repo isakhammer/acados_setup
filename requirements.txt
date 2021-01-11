@@ -3,4 +3,3 @@ matplotlib
 casadi
 scipy
 sklearn
-quadprog
