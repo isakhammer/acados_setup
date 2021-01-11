@@ -29,14 +29,12 @@ RUN mkdir -p /root/src/
 WORKDIR /root/src
 COPY . .
 
-#ACADOS
-ENV LD_LIBRARY_PATH=/root/src/acados/lib
-ENV ACADOS_SOURCE_DIR=/root/src/acados
-SHELL ["/bin/bash", "-c"]
+WORKDIR /root
 
-RUN pip3 install virtualenv
-RUN virtualenv acadosenv --python=python3.8
-RUN . acadosenv/bin/activate
+#ACADOS
+ENV LD_LIBRARY_PATH=/root/acados/lib
+ENV ACADOS_SOURCE_DIR=/root/acados
+SHELL ["/bin/bash", "-c"]
 
 # # MAKE FILES
 # RUN cd acados &&  \
@@ -45,14 +43,15 @@ RUN . acadosenv/bin/activate
 #     make run_examples_c
 
 # CMakeFiles
-RUN cd acados && ls && \
+RUN git clone https://github.com/acados/acados.git
+RUN cd acados && git submodule update --init --recursive
+RUN cd acados && \
     mkdir -p build && \
     cd build && \
     cmake .. && \
     make install
 
-RUN pip3 install /root/src/acados/interfaces/acados_template
+RUN pip3 install /root/acados/interfaces/acados_template
 RUN pip3 install -r /root/src/requirements.txt
 
 CMD ["bash"]
-
