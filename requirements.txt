@@ -1,0 +1,6 @@
+numpy
+matplotlib
+casadi
+scipy
+sklearn
+quadprog
