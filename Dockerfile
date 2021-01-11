@@ -32,7 +32,8 @@ RUN apt-get install cmake -y
 RUN cd acados && ls && \
     mkdir -p build && \
     cd build && \
-    cmake -DACADOS_WITH_QPOASES=ON ACADOS_PYTHON=ON ACADOS_EXAMPLES=ON .. && \
+    cmake -DACADOS_WITH_QPOASES=ON ACADOS_PYTHON=ON ACADOS_EXAMPLES=ON \
+            -DACADOS_INSTALL_DIR=/root/src/acados/ .. && \
     make install  && \
     cd .. && \
     pip3 install interfaces/acados_template
