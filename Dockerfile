@@ -53,5 +53,8 @@ RUN cd acados && \
 
 RUN pip3 install /root/acados/interfaces/acados_template
 RUN pip3 install -r /root/src/requirements.txt
+WORKDIR /root/src
+
+RUN echo "source /root/src/common_scripts.sh" >> /root/.bashrc
 
 CMD ["bash"]
