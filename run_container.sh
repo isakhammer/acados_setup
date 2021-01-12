@@ -14,4 +14,6 @@ function run_python_container()  {
         --privileged \
         $image_name "$@"
 }
+
 run_python_container
+
