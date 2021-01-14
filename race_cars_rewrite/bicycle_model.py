@@ -1,25 +1,58 @@
+#
+# Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
+# Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
+# Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
+# Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+#
+# This file is part of acados.
+#
+# The 2-Clause BSD License
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.;
+#
+
+# author: Daniel Kloeser
 
 from casadi import *
-# from tracks.readDataFcn import getTrack
+from tracks.readDataFcn import getTrack
 
 
-def bicycle_model(s0, kapparef):
-
+def bicycle_model(track="LMS_Track.txt"):
     # define structs
     constraint = types.SimpleNamespace()
     model = types.SimpleNamespace()
+
     model_name = "Spatialbicycle_model"
 
     # load track parameters
+    [s0, _, _, _, kapparef] = getTrack(track)
     length = len(s0)
     pathlength = s0[-1]
-
-    # REDO THIS
-    s0          = np.append(s0, [s0[length - 1] + s0[1:length]])
-    kapparef    = np.append(kapparef, kapparef[1:length])
-
-    s0          = np.append([-s0[length - 2] + s0[length - 81 : length - 2]], s0)
-    kapparef    = np.append(kapparef[length - 80 : length - 1], kapparef)
+    # copy loop to beginning and end
+    s0 = np.append(s0, [s0[length - 1] + s0[1:length]])
+    kapparef = np.append(kapparef, kapparef[1:length])
+    s0 = np.append([-s0[length - 2] + s0[length - 81 : length - 2]], s0)
+    kapparef = np.append(kapparef[length - 80 : length - 1], kapparef)
 
     # compute spline interpolations
     kapparef_s = interpolant("kapparef_s", "bspline", [s0], kapparef)
@@ -80,8 +113,8 @@ def bicycle_model(s0, kapparef):
     a_long = Fxd / m
 
     # Model bounds
-    model.n_min = 3  # width of the track [m]
-    model.n_max = 3  # width of the track [m]
+    model.n_min = -0.12  # width of the track [m]
+    model.n_max = 0.12  # width of the track [m]
 
     # state bounds
     model.throttle_min = -1.0
