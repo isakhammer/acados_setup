@@ -37,7 +37,7 @@ from casadi import *
 from tracks.readDataFcn import getTrack
 
 
-def bicycle_model(track="LMS_Track.txt"):
+def bicycle_model(s0, kapparef):
     # define structs
     constraint = types.SimpleNamespace()
     model = types.SimpleNamespace()
@@ -45,7 +45,8 @@ def bicycle_model(track="LMS_Track.txt"):
     model_name = "Spatialbicycle_model"
 
     # load track parameters
-    [s0, _, _, _, kapparef] = getTrack(track)
+    # [s0, _, _, _, kapparef] = getTrack(track)
+
     length = len(s0)
     pathlength = s0[-1]
     # copy loop to beginning and end

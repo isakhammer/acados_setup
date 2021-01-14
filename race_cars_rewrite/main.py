@@ -35,7 +35,7 @@
 
 import time, os
 import numpy as np
-from acados_settings_dev import *
+from acados_settings import *
 from plotFcn import *
 from tracks.readDataFcn import getTrack
 import matplotlib.pyplot as plt
@@ -43,11 +43,13 @@ import matplotlib.pyplot as plt
 """
 Example of the frc_racecars in simulation without obstacle avoidance:
 This example is for the optimal racing of the frc race cars. The model is a simple bicycle model and the lateral acceleration is constraint in order to validate the model assumptions.
-The simulation starts at s=-2m until one round is completed(s=8.71m). The beginning is cut in the final plots to simulate a 'warm start'. 
+The simulation starts at s=-2m until one round is completed(s=8.71m). The beginning is cut in the final plots to simulate a 'warm start'.
 """
 
 track = "LMS_Track.txt"
-[Sref, _, _, _, _] = getTrack(track)
+[Sref, _, _, _, _]      = getTrack(track)
+[s0, _, _, _, kapparef] = getTrack(track)
+
 
 Tf = 1.0  # prediction horizon
 N = 50  # number of discretization steps
@@ -55,7 +57,7 @@ T = 10.00  # maximum simulation time[s]
 sref_N = 3  # reference for final reference progress
 
 # load model
-constraint, model, acados_solver = acados_settings(Tf, N, track)
+constraint, model, acados_solver = acados_settings(Tf, N, s0, kapparef)
 
 # dimensions
 nx = model.x.size()[0]

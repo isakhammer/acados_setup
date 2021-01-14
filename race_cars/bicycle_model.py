@@ -161,4 +161,5 @@ def bicycle_model(track="LMS_Track.txt"):
     model.p = p
     model.name = model_name
     model.params = params
+
     return model, constraint
