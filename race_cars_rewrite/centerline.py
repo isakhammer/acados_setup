@@ -3,13 +3,14 @@ import scipy.interpolate as interpolate
 import matplotlib.pyplot as plt
 
 class BSpline:
+
     """
     Wrapper of scipy spline libary
     """
     def __init__(self, x, t_length, closed=True):
         t = np.linspace(0, t_length, num=x.size, endpoint=True)
         that, c, k = interpolate.splrep(t, x, s=0, k=4)
-        self.spline = interpolate.BSpline(that, c, k, extrapolate=False)
+        self.spline = interpolate.BSpline(that, c, k, extrapolate=True)
         self.tmin = t.min()
         self.tmax= t.max()
         self.closed = closed
@@ -18,18 +19,18 @@ class BSpline:
         if isinstance(t, (list, tuple, np.ndarray)):
             return self.value_array(t)
 
-        if self.closed:
-            # This normalization can cause wierd numerical issues since Bspline is
-            # not periodic.
-            while t > self.tmax:
-                t -= self.tmax
-            while t < 10**-10:
-                t += self.tmax
-        else:
-            if t > self.tmax:
-                t = self.tmax
-            if t < self.tmin:
-                t =  self.tmin
+        # if self.closed:
+        #     # This normalization can cause wierd numerical issues since Bspline is
+        #     # not periodic.
+        #     while t > self.tmax:
+        #         t -= self.tmax
+        #     while t < 10**-10:
+        #         t += self.tmax
+        # else:
+        #     if t > self.tmax:
+        #         t = self.tmax
+        #     if t < self.tmin:
+        #         t =  self.tin
 
         return self.spline(t)
 
@@ -48,7 +49,8 @@ class BSpline2D:
     def value(self, t):
         x = self.x_spline.value(t)
         y = self.y_spline.value(t)
-        return np.array([x,y]).T
+        p = np.array([x,y]).T
+        return p
 
 
 class Centerline:
@@ -56,9 +58,11 @@ class Centerline:
     def __init__(self, reftrack):
 
         # Parameterize everything on t
-        self.t_length       = self.compute_length(reftrack[:,:2])
-        self.p_spline       = BSpline2D(reftrack[:,:2], self.t_length, closed=True )
-        self.w_spline       = BSpline2D(reftrack[:, 2:], self.t_length, closed=True )
+        s = self.compute_length(reftrack[:,:2], exact=True)
+        self.s_length       = s[-1]
+        self.s_spline       = BSpline(s, self.s_length, closed=True)
+        self.p_spline       = BSpline2D(reftrack[:,:2], self.s_length, closed=True )
+        self.w_spline       = BSpline2D(reftrack[:, 2:], self.s_length, closed=True )
 
         def compute_kappa(p):
             def det(v,q):
@@ -77,12 +81,12 @@ class Centerline:
 
         # discretize centerline
         n_points = 100
-        t = np.linspace(0, self.t_length, n_points, endpoint=True)
+        t = np.linspace(0, self.s_length, n_points, endpoint=True)
         p = self.p_spline.value(t)
 
         # Make spline of curvature
         kappa = compute_kappa(p)
-        self.kappa_spline = BSpline( kappa, self.t_length, closed=True )
+        self.kappa_spline = BSpline( kappa, self.s_length, closed=True )
 
         # Make spline of normal vector spline
         R = np.array([[0, -1],
@@ -90,7 +94,7 @@ class Centerline:
         T = p[1:] - p[:-1]
         N = T@R.T
         N /= np.linalg.norm(N, ord=1, axis=1, keepdims=True)
-        self.N_spline       = BSpline2D(N, self.t_length, closed=True )
+        self.N_spline       = BSpline2D(N, self.s_length, closed=True )
 
 
 
@@ -105,11 +109,11 @@ class Centerline:
             y = y_fine_spline.value(t)
             wpts = np.array([x,y]).T
 
-        p1 = wpts[:-1,]
-        p2 = wpts[1:]
-        l = np.linalg.norm(p2-p1,axis=1, ord=1)
-        t = np.cumsum(l)
-        return t[-1]
+        dp = wpts[1:] - wpts[:-1]
+        l = np.sqrt(dp[:,0]**2 + dp[:,1]**2)
+        s = np.cumsum(l)
+        s = np.append([0],s)
+        return s
 
     def proj(self, p, psi, t0 = None, method="bruteforce"):
         # Quite shitty method
@@ -134,14 +138,28 @@ class Centerline:
     def discretize(self, t0, t1, N):
         t = np.linspace(t0, t1, N)
         reftrack        = np.zeros((N,4))
-
         reftrack[:, :2] = self.p_spline.value(t)
         reftrack[:, 2:] = self.w_spline.value(t)
         kappa           = self.kappa_spline.value(t)
         normvec         = self.N_spline.value(t)
-        return reftrack, kappa, normvec
+        s               = self.s_spline.value(t)
+        return s, reftrack, kappa, normvec
 
 
     def end(self):
-        return self.t_length
+        return self.s_length
 
+
+if False:
+    n = 10
+    a = np.zeros((n,2))
+    b = np.linspace(0,2*np.pi, n)
+    a = 10*np.array([np.cos(b), np.sin(b)]).T
+    plt.plot(a[:,0], a[:,1], label="blue")
+
+    b = np.linspace(0,2*np.pi, 30)
+    a_spline = BSpline2D(a, b[-1])
+    p = a_spline.value(b)
+    plt.plot(p[:,0], p[:,1], label="red")
+    plt.legend()
+    plt.show()

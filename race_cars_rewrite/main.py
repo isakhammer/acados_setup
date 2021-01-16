@@ -39,18 +39,51 @@ from acados_settings import *
 from plotFcn import *
 from tracks.readDataFcn import getTrack
 import matplotlib.pyplot as plt
+import centerline
 
 """
 Example of the frc_racecars in simulation without obstacle avoidance:
 This example is for the optimal racing of the frc race cars. The model is a simple bicycle model and the lateral acceleration is constraint in order to validate the model assumptions.
 The simulation starts at s=-2m until one round is completed(s=8.71m). The beginning is cut in the final plots to simulate a 'warm start'.
 """
+def generate_circle():
+    n = 10000
+    r = 1
+    w = 3
+    th = np.linspace(0, 2*np.pi, n)
+    w = r*np.ones(n)
+    p = r*np.array([np.cos(th), np.sin(th)]).T
+    return p, w
+
+
+p,w = generate_circle()
+reftrack = np.column_stack(( p, w, w ))
+cl = centerline.Centerline(reftrack)
+s, reftrack, kappa, normvec = cl.discretize(0, cl.end(), 100)
 
 track = "LMS_Track.txt"
-[Sref, _, _, _, _]      = getTrack(track)
-[s0, _, _, _, kapparef] = getTrack(track)
+[s_imp, _, _, _, kappa_imp] = getTrack(track)
 
+# Sref        = s_imp
+# s0          = s_imp
+# kapparef    = kappa_imp
 
+s0          = s
+kapparef    = kappa
+
+plot = False
+if plot:
+    plt.subplot(211)
+    plt.title("ori")
+    plt.plot(s0)
+    plt.plot(kapparef)
+    plt.subplot(212)
+    plt.title("disc")
+    plt.plot(s)
+    plt.plot(kappa)
+    plt.show()
+
+Sref        = s0
 Tf = 1.0  # prediction horizon
 N = 50  # number of discretization steps
 T = 10.00  # maximum simulation time[s]
