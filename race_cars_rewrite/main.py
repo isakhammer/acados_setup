@@ -133,6 +133,16 @@ def plotalat(simX,simU,constraint,t):
     plt.xlabel('t')
     plt.ylabel('alat[m/s^2]')
 
+def getTrack(filename):
+    track_file = os.path.join(str(Path(__file__).parent),"tracks", filename)
+    array=np.loadtxt(track_file)
+    sref=array[:,0]
+    xref=array[:,1]
+    yref=array[:,2]
+    psiref=array[:,3]
+    kapparef=array[:,4]
+    return sref,xref,yref,psiref,kapparef
+
 """
 Example of the frc_racecars in simulation without obstacle avoidance:
 This example is for the optimal racing of the frc race cars. The model is a simple bicycle model and the lateral acceleration is constraint in order to validate the model assumptions.
@@ -252,11 +262,4 @@ plotRes(simX, simU, t)
 plotTrackProj(simX, track)
 plotalat(simX, simU, constraint, t)
 
-# Print some stats
-print("Average computation time: {}".format(tcomp_sum / Nsim))
-print("Maximum computation time: {}".format(tcomp_max))
-print("Average speed:{}m/s".format(np.average(simX[:, 3])))
-print("Lap time: {}s".format(Tf * Nsim / N))
-# avoid plotting when running on Travis
-if os.environ.get("ACADOS_ON_TRAVIS") is None:
-    plt.show()
+plt.show()
