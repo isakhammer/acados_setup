@@ -238,7 +238,51 @@ def getTrack(filename):
     yref=array[:,2]
     psiref=array[:,3]
     kapparef=array[:,4]
-    return sref,xref,yref,psiref,kapparef
+
+    w = np.ones(array.shape[0])
+    reftrack = np.zeros(( array.shape[0], 4 ))
+    reftrack[:,:2]  = array[:, 1:3]
+    reftrack[:,2]   = w
+    reftrack[:,3]   = w
+
+    # k = 0.5
+    def lp(reftrack, k):
+        for i in range(1, reftrack.shape[0]):
+            reftrack[i, :2] = k*reftrack[i, :2] + (1 - k)*reftrack[i-1, :2]
+        return reftrack
+
+    reftrack = lp(reftrack, 0.5)
+    # reftrack = lp(reftrack, 0.9)
+    cl = centerline.Centerline(reftrack)
+    s, reftrack, kappa, normvec, psi = cl.discretize(0,cl.end(), array.shape[0])
+
+
+
+    debug=False
+    if debug==True:
+
+        plt.subplot(221)
+        plt.plot(s, label="centerline")
+        plt.plot(sref, label="ref")
+
+        plt.subplot(223)
+        plt.plot(reftrack[:,0], reftrack[:,1])
+        plt.plot(xref, yref)
+
+        plt.subplot(222)
+        plt.plot(s, kappa, label="centerline")
+        plt.plot(sref, kapparef, label="ref")
+        plt.legend()
+
+        plt.subplot(224)
+        plt.scatter(sref, psiref, label="ref")
+        plt.scatter(s, psi, label="centerline")
+        plt.legend()
+
+        # plt.show()
+        # exit()
+    return s, reftrack[:,0], reftrack[:,1], kappa, psi
+    # return sref,xref,yref,psiref,kapparef
 
 """
 Example of the frc_racecars in simulation without obstacle avoidance:
@@ -258,14 +302,14 @@ def generate_circle():
 p,w = generate_circle()
 reftrack = np.column_stack(( p, w, w ))
 cl = centerline.Centerline(reftrack)
-s, reftrack, kappa, normvec = cl.discretize(0, cl.end(), 100)
+
 
 track = "LMS_Track.txt"
-[s_imp, _, _, _, kappa_imp] = getTrack(track)
+[simp,ximp,yimp,psiimp,kappaimp] = getTrack(track)
 
-Sref        = s_imp
-s0          = s_imp
-kapparef    = kappa_imp
+Sref        = simp
+s0          = simp
+kapparef    = kappaimp
 
 # s0          = s
 # kapparef    = kappa

@@ -96,7 +96,18 @@ class Centerline:
         N /= np.linalg.norm(N, ord=1, axis=1, keepdims=True)
         self.N_spline       = BSpline2D(N, self.s_length, closed=True )
 
+        # Kinda unstable because it does normalize (-pi, pi)
+        # Should do this with no normalization instead.
+        psi = np.arctan2(T[:,1], T[:,0])
+        dpsi = psi[1:] - psi[:-1]
+        for i in range( dpsi.shape[0] ):
+            while dpsi[i] > np.pi:
+                dpsi[i] -= 2*np.pi
+            while dpsi[i] < -np.pi:
+                dpsi[i] += 2*np.pi
 
+        psi = np.cumsum(dpsi)
+        self.psi_spline       = BSpline(psi, self.s_length, closed=True )
 
     def compute_length(self, wpts, exact=False, N_exact=1000):
 
@@ -143,7 +154,8 @@ class Centerline:
         kappa           = self.kappa_spline.value(t)
         normvec         = self.N_spline.value(t)
         s               = self.s_spline.value(t)
-        return s, reftrack, kappa, normvec
+        psi             = self.psi_spline.value(t)
+        return s, reftrack, kappa, normvec, psi
 
 
     def end(self):
