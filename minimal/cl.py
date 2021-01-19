@@ -83,13 +83,11 @@ class Centerline:
             return kappa
 
         # discretize centerline
-        n_points = 100
+        n_points = 1000
         t = np.linspace(0, self.s_length, n_points, endpoint=False)
         p = self.p_spline.value(t)
 
         # Make spline of curvature
-        # p = reftrack[:,:2]
-        # print(p.shape)
         kappa = compute_kappa(p)
         self.kappa_spline = BSpline( kappa, self.s_length, closed=True )
 
