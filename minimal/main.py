@@ -37,47 +37,37 @@ import time, os
 import numpy as np
 from matplotlib import cm
 import matplotlib.pyplot as plt
-import centerline
+import cl
 
 # from acados_template import AcadosModel, AcadosOcp, AcadosOcpSolver
 import acados_template as ac
-from bicycle_model import bicycle_model
 import scipy.linalg
 import numpy as np
+import types
 
 import casadi as ca
 
 
-def bicycle_model(s0, kapparef):
+def bicycle_model(s, kappa):
     # define structs
     constraint  = types.SimpleNamespace()
     model       = types.SimpleNamespace()
 
     model_name = "Spatialbicycle_model"
-
-    # load track parameters
-    # [s0, _, _, _, kapparef] = getTrack(track)
-
-    length = len(s0)
-    pathlength = s0[-1]
-
-    # copy loop to beginning and end
-    # s0 = np.append(s0, [s0[length - 1] + s0[1:length]])
-    # kapparef = np.append(kapparef, kapparef[1:length])
-    # s0 = np.append([-s0[length - 2] + s0[length - 81 : length - 2]], s0)
-    # kapparef = np.append(kapparef[length - 80 : length - 1], kapparef)
+    length = len(s)
+    pathlength = s[-1]
 
     # compute spline interpolations
-    kapparef_s = ca.interpolant("kapparef_s", "bspline", [s0], kapparef)
+    kapparef_s = ca.interpolant("kapparef_s", "bspline", [s], kappa)
 
     ## Race car parameters
-    m = 0.043
+    m = 160.0
     C1 = 0.5
     C2 = 15.5
-    Cm1 = 0.28
-    Cm2 = 0.05
-    Cr0 = 0.011
-    Cr2 = 0.006
+    Cm1 = 0.28  # power
+    Cm2 = 0.0   # powerlim term
+    Cr0 = 0.000 # air friction term
+    Cr2 = 0.000 # rolling friction term
 
     ## CasADi Model
     # set up states & controls
@@ -188,7 +178,7 @@ def acados_settings(s, kappa):
     ocp = ac.AcadosOcp()
 
     # export model
-    model, constraint = bicycle_model(s, kapparef)
+    model, constraint = bicycle_model(s, kappa)
 
     # # define acados ODE
     # model_ac = ac.AcadosModel()
@@ -309,50 +299,50 @@ def acados_settings(s, kappa):
     # return constraint, model, acados_solver
 
 def generate_straight():
-    n = 10000
-    L = 10
+    n = 1000
+    L = 100
     r = 1
-    W = 3
-    w = W*np.ones(n)
+    width = 3
+    w = width*np.ones(n)
     l = np.linspace(0, L, n)
     p = np.array([l, np.zeros(l.shape)]).T
     return p, w
 
 def generate_circle():
-    n = 10000
-    r = 1
-    w = 3
+    n = 100
+    r = 7.5
+    width = 3
     th = np.linspace(0, 2*np.pi, n)
-    w = r*np.ones(n)
+    w = width*np.ones(n)
     p = r*np.array([np.cos(th), np.sin(th)]).T
     return p, w
 
 
 
-p,w = generate_circle()
-# p,w = generate_straight()
+# p,w = generate_circle()
+p,w = generate_straight()
 reftrack = np.column_stack(( p, w, w ))
-cl = centerline.Centerline(reftrack)
+cl = cl.Centerline(reftrack)
 s, reftrack, kappa, normvec, psi = cl.discretize(0,cl.end(), 100)
 
 
-plt.subplot(221)
-plt.plot(s, label="s")
-plt.legend()
-plt.subplot(222)
-plt.scatter(reftrack[:,0], reftrack[:,1], label="reftrack")
-plt.legend()
-plt.subplot(223)
-plt.plot(kappa, label="kappa")
-plt.legend()
-plt.subplot(224)
-plt.plot(psi, label="psi")
-plt.legend()
-plt.show()
+if False:
+    plt.subplot(221)
+    plt.plot(s, label="s")
+    plt.legend()
+    plt.subplot(222)
+    plt.scatter(reftrack[:,0], reftrack[:,1], label="reftrack")
+    plt.legend()
+    plt.subplot(223)
+    plt.plot(kappa, label="kappa")
+    plt.legend()
+    plt.subplot(224)
+    plt.plot(psi, label="psi")
+    plt.legend()
+    plt.show()
 
 # # load model
-acados_settings(s, kapa)
-# constraint, model, acados_solver = acados_settings(Tf, N, s0, kapparef)
+acados_settings(s, kappa)
 
 # # dimensions
 # nx = model.x.size()[0]
