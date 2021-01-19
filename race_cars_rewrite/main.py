@@ -267,16 +267,33 @@ def getTrack(filename):
 
         plt.subplot(223)
         plt.plot(reftrack[:,0], reftrack[:,1])
+        v = reftrack[1,:2] - reftrack[0,:2]
+        plt.arrow(reftrack[0,0], reftrack[0,1], v[0], v[1], head_width=0.05, head_length=0.1, fc='k', ec='k')
+
         plt.plot(xref, yref)
 
         plt.subplot(222)
-        plt.plot(s, kappa, label="centerline")
         plt.plot(sref, kapparef, label="ref")
+        plt.plot(s, kappa, label="centerline")
+
+        # kappa_lp = kappa
+        # k= 0.65
+        # for i in range(1, kappa_lp.size):
+        #     kappa_lp[i] = kappa_lp[i]*k + (1-k)*kappa_lp[i-1]
+        # plt.plot(s, kappa_lp, label="centerline_lp")
+
         plt.legend()
 
         plt.subplot(224)
         plt.scatter(sref, psiref, label="ref")
         plt.scatter(s, psi, label="centerline")
+
+        # psi_lp = psi
+        # k= 0.5
+        # for i in range(1, psi.size):
+        #     psi_lp[i] = psi_lp[i]*k + (1-k)*psi_lp[i-1]
+        # plt.scatter(s, psi_lp, label="centerline_lp")
+
         plt.legend()
 
         # plt.show()
