@@ -74,17 +74,22 @@ class Centerline:
             # Evalulating kappa, inclusive start and end point
             kappa = np.zeros(p.shape[0])
             kappa[0] = curvature(p[-1], p[0], p[1])
-            kappa[-1] = curvature(p[-1], p[0], p[1])
+            kappa[-1] = curvature(p[-2], p[-1], p[0])
+
             for i in range(1, p.shape[0] -1):
                 kappa[i] = curvature(p[i-1], p[i], p[i+1])
+
+
             return kappa
 
         # discretize centerline
         n_points = 100
-        t = np.linspace(0, self.s_length, n_points, endpoint=True)
+        t = np.linspace(0, self.s_length, n_points, endpoint=False)
         p = self.p_spline.value(t)
 
         # Make spline of curvature
+        # p = reftrack[:,:2]
+        # print(p.shape)
         kappa = compute_kappa(p)
         self.kappa_spline = BSpline( kappa, self.s_length, closed=True )
 
@@ -96,8 +101,7 @@ class Centerline:
         N /= np.linalg.norm(N, ord=1, axis=1, keepdims=True)
         self.N_spline       = BSpline2D(N, self.s_length, closed=True )
 
-        # Kinda unstable because it does normalize (-pi, pi)
-        # Should do this with no normalization instead.
+        # cumulativive summation of heading angle with no normalization.
         psi = np.arctan2(T[:,1], T[:,0])
         dpsi = psi[1:] - psi[:-1]
         for i in range( dpsi.shape[0] ):
@@ -105,8 +109,8 @@ class Centerline:
                 dpsi[i] -= 2*np.pi
             while dpsi[i] < -np.pi:
                 dpsi[i] += 2*np.pi
-
         psi = np.cumsum(dpsi)
+
         self.psi_spline       = BSpline(psi, self.s_length, closed=True )
 
     def compute_length(self, wpts, exact=False, N_exact=1000):
