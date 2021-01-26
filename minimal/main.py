@@ -326,7 +326,7 @@ cl = cl.Centerline(reftrack)
 s, reftrack, kappa, normvec, psi = cl.discretize(0,cl.end(), 100)
 
 
-if False:
+if True:
     plt.subplot(221)
     plt.plot(s, label="s")
     plt.legend()
